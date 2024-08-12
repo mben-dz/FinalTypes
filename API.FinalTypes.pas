@@ -22,7 +22,7 @@ type
     function GetTxt: string;
     procedure SetTxt(const aValue: string);
   public
-    property Txt: string read GetLabel write SetLabel;
+    property Txt: string read GetTxt write SetTxt;
   end;
  {$ELSEIF Defined(FRAMEWORK_VCL)}
   TControl = class helper for Vcl.Controls.TControl
