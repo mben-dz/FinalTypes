@@ -19,18 +19,18 @@ type
   {$IF Defined(FRAMEWORK_FMX)}
   TPresentedTextControlHelper = class helper for FMX.StdCtrls.TPresentedTextControl
   private
-    function GetLabel: string;
-    procedure SetLabel(const aValue: string);
+    function GetTxt: string;
+    procedure SetTxt(const aValue: string);
   public
     property Txt: string read GetLabel write SetLabel;
   end;
  {$ELSEIF Defined(FRAMEWORK_VCL)}
   TControl = class helper for Vcl.Controls.TControl
   private
-    function GetLabel: string;
-    procedure SetLabel(const aValue: string);
+    function GetTxt: string;
+    procedure SetTxt(const aValue: string);
   public
-    property Txt: string read GetLabel write SetLabel;
+    property Txt: string read GetTxt write SetTxt;
   end;
  {$ENDIF}
 
@@ -61,7 +61,7 @@ type
     class function GetFinalPicture(aWidth, aHeight: Integer): TFinalPicture; overload; static;
   {$ENDIF}
   end;
-  TFinalPictureMETA = class of TFinalPicture;
+//  TFinalPictureMETA = class of TFinalPicture;
 
   TMemoryStreamHelper = class helper for TMemoryStream
     function DecodeBase64: TMemoryStream;
@@ -79,7 +79,7 @@ uses
   Vcl.Imaging.GIFImg,
   Vcl.Imaging.pngimage;
 
-{ TBase_Bitmap }
+{ TFinalPicture }
 
 class function TFinalPicture.GetFinalPicture: TFinalPicture;
 begin
@@ -154,24 +154,24 @@ end;
 {$IF Defined(FRAMEWORK_FMX)}
  {TPresentedTextControlHelper}
 
-function TPresentedTextControl.GetLabel: string;
+function TPresentedTextControl.GetTxt: string;
 begin
   Result := Self.Text;
 end;
 
-procedure TPresentedTextControl.SetLabel(const aValue: string);
+procedure TPresentedTextControl.SetTxt(const aValue: string);
 begin
   Self.Text := aValue;
 end;
 {$ELSEIF Defined(FRAMEWORK_VCL)}
 { TControl }
 
-function TControl.GetLabel: string;
+function TControl.GetTxt: string;
 begin
   Result := Self.Text;
 end;
 
-procedure TControl.SetLabel(const aValue: string);
+procedure TControl.SetTxt(const aValue: string);
 begin
   Self.Text := aValue;
 end;
