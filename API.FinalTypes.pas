@@ -3,51 +3,59 @@ unit API.FinalTypes;
 interface
 
 uses
-  System.Classes,
-
+  System.Classes
 {$IF Defined(FRAMEWORK_FMX)}
-  FMX.Graphics,
+  , FMX.Graphics,
   FMX.Controls;
 {$ELSEIF Defined(FRAMEWORK_VCL)}
-  Vcl.Graphics,
+  , Vcl.Graphics,
   Vcl.Controls;
 {$ELSE}
   {$MESSAGE ERROR 'No framework defined'}
 {$ENDIF}
 
 type
-  {$IF Defined(FRAMEWORK_FMX)}
-  TPresentedTextControlHelper = class helper for FMX.StdCtrls.TPresentedTextControl
-  private
+
+{$IF Defined(FRAMEWORK_FMX)}
+
+  TFMXControlHelper = class helper for FMX.Controls.TControl
+  strict private
     function GetTxt: string;
     procedure SetTxt(const aValue: string);
   public
     property Txt: string read GetTxt write SetTxt;
   end;
- {$ELSEIF Defined(FRAMEWORK_VCL)}
-  TControl = class helper for Vcl.Controls.TControl
-  private
+
+{$ELSEIF Defined(FRAMEWORK_VCL)}
+
+  TControlHelper = class helper for Vcl.Controls.TControl
+  strict private
     function GetTxt: string;
     procedure SetTxt(const aValue: string);
   public
     property Txt: string read GetTxt write SetTxt;
   end;
- {$ENDIF}
+
+{$ENDIF}
 
 
   TFinalPicture = class;
 
-  {$IF Defined(FRAMEWORK_FMX)}
-  TBitmapFmxHelper = class helper for FMX.Graphics.TBitmap
+{$IF Defined(FRAMEWORK_FMX)}
+
+  TFmxBitmapHelper = class helper for FMX.Graphics.TBitmap
   public
     function ToFinalPicture: TFinalPicture;
   end;
-  {$ELSEIF Defined(FRAMEWORK_VCL)}
-  TPictureHelper = class helper for Vcl.Graphics.TPicture
+
+{$ELSEIF Defined(FRAMEWORK_VCL)}
+
+  TVclPictureHelper = class helper for Vcl.Graphics.TPicture
   public
     function ToFinalPicture: TFinalPicture;
   end;
-  {$ENDIF}
+
+{$ENDIF}
 
   TFinalPicture = class(
     {$IF Defined(FRAMEWORK_FMX)}
@@ -59,14 +67,13 @@ type
     class function GetFinalPicture: TFinalPicture; overload; static;
   {$IF Defined(FRAMEWORK_FMX)}
     class function GetFinalPicture(aWidth, aHeight: Integer): TFinalPicture; overload; static;
+  {$ELSEIF Defined(FRAMEWORK_VCL)}
+
   {$ENDIF}
   end;
-//  TFinalPictureMETA = class of TFinalPicture;
 
   TMemoryStreamHelper = class helper for TMemoryStream
-    function DecodeBase64: TMemoryStream;
-  end;
-  TStringStreamHelper = class helper for TStringStream
+  public
     function DecodeBase64: TMemoryStream;
   end;
 
@@ -74,13 +81,18 @@ implementation
 
 uses
   System.NetEncoding,
-  System.SysUtils,
+  System.SysUtils
+{$IF Defined(FRAMEWORK_FMX)}
+  , FMX.Memo,
+  FMX.ActnList // ICaption
+{$ELSEIF Defined(FRAMEWORK_VCL)}
+  , Vcl.StdCtrls,
   Vcl.Imaging.jpeg,
   Vcl.Imaging.GIFImg,
-  Vcl.Imaging.pngimage;
+  Vcl.Imaging.pngimage
+  {$ENDIF};
 
-{ TFinalPicture }
-
+{$REGION '  TFinalPicture .. '}
 class function TFinalPicture.GetFinalPicture: TFinalPicture;
 begin
   Result := TFinalPicture.Create;
@@ -91,27 +103,66 @@ class function TFinalPicture.GetFinalPicture(aWidth, aHeight: Integer): TFinalPi
 begin
   Result := TFinalPicture.Create(aWidth, aHeight);
 end;
+{$ELSEIF Defined(FRAMEWORK_VCL)}
 {$ENDIF}
 
 {$IF Defined(FRAMEWORK_FMX)}
 
-{ TBitmapFmxHelper }
-
-function TBitmapFmxHelper.ToFinalPicture: TFinalPicture;
+function TFmxBitmapHelper.ToFinalPicture: TFinalPicture;
 begin
   Result := TFinalPicture(Self);
 end;
+
 {$ELSEIF Defined(FRAMEWORK_VCL)}
-
-{ TPictureHelper }
-
-function TPictureHelper.ToFinalPicture: TFinalPicture;
+function TVclPictureHelper.ToFinalPicture: TFinalPicture;
 begin
   Result := TFinalPicture(Self);
 end;
 {$ENDIF}
+{$ENDREGION}
 
-{ TMemoryStreamHelper }
+{$REGION '  [FMX.TControl|VCL.TControl] Helpers .. '}
+{$IF Defined(FRAMEWORK_FMX)}
+
+function TFMXControlHelper.GetTxt: string;
+var
+  LCaptionControl: ICaption;
+begin
+  // Check if the control supports the ICaption interface
+  if Supports(Self, ICaption, LCaptionControl) then
+    Result := LCaptionControl.Text else
+  if (Self) is (TMemo) then // in VCL is just a Derived TControl !!
+    Result := TMemo(Self).Text else
+    raise Exception.Create('This control does not support setting text.');
+end;
+
+procedure TFMXControlHelper.SetTxt(const aValue: string);
+var
+  LCaptionControl: ICaption;
+begin
+  // Check if the control supports the ICaption interface
+  if Supports(Self, ICaption, LCaptionControl) then
+    LCaptionControl.Text := aValue else
+  if (Self) is (TMemo) then
+    TMemo(Self).Text := aValue else
+    raise Exception.Create('This control does not support setting text.');
+end;
+
+{$ELSEIF Defined(FRAMEWORK_VCL)}
+
+function TControlHelper.GetTxt: string;
+begin
+  Result := Self.Text;
+end;
+
+procedure TControlHelper.SetTxt(const aValue: string);
+begin
+  Self.Text := aValue;
+end;
+{$ENDIF}
+{$ENDREGION}
+
+{$REGION '  TMemoryStream Helper .. '}
 function TMemoryStreamHelper.DecodeBase64: TMemoryStream;
 var
   LOutput: TMemoryStream;
@@ -130,51 +181,6 @@ begin
   Position := 0;
   Result := Self;
 end;
-
-{ TStringStreamHelper }
-
-function TStringStreamHelper.DecodeBase64: TMemoryStream;
-var
-  LOutput: TMemoryStream;
-begin
-  LOutput := TMemoryStream.Create;
-  try
-    Position := 0;
-
-    TNetEncoding.Base64.Decode(Self, LOutput);
-    LOutput.Position := 0;
-    Clear;
-    LOutput.SaveToStream(Self);
-  finally
-    LOutput.Free;
-  end;
-  Position := 0;
-  Result := Self;
-end;
-{$IF Defined(FRAMEWORK_FMX)}
- {TPresentedTextControlHelper}
-
-function TPresentedTextControl.GetTxt: string;
-begin
-  Result := Self.Text;
-end;
-
-procedure TPresentedTextControl.SetTxt(const aValue: string);
-begin
-  Self.Text := aValue;
-end;
-{$ELSEIF Defined(FRAMEWORK_VCL)}
-{ TControl }
-
-function TControl.GetTxt: string;
-begin
-  Result := Self.Text;
-end;
-
-procedure TControl.SetTxt(const aValue: string);
-begin
-  Self.Text := aValue;
-end;
-{$ENDIF}
+{$ENDREGION}
 
 end.
